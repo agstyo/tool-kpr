@@ -226,6 +226,154 @@ function calculate() {
             <div id="combinedTable" class="hidden">${table}</div>
         `;
     }
+    else if (rateType === 'fixed') {
+        const fixedRate = parseFloat(document.getElementById('fixedRate').value);
+        const monthlyPayment = calculateMonthlyPayment(loanAmount, fixedRate, totalMonths);
+        const { table, totalPaid } = generateAmortizationTable(loanAmount, monthlyPayment, fixedRate, totalMonths, partialPayments);
+        totalInterest = totalPaid - loanAmount;
+        result = `
+            <h3>Hasil Simulasi KPR Fixed Rate</h3>
+            <p>Jumlah Pinjaman: ${formatRupiah(loanAmount)}</p>
+            <p>Tenor Awal: ${tenor} tahun (${totalMonths} bulan)</p>
+            <p>Suku Bunga: ${fixedRate}% per tahun</p>
+            <p>Angsuran Bulanan Awal: ${formatRupiah(monthlyPayment)}</p>
+            ${partialPayments.map(p => `<p>Pelunasan Sebagian (Bulan ${p.month}): ${formatRupiah(p.amount)} - ${p.option === 'sameTenor' ? 'Tetap Tenor' : 'Kurangi Tenor'}</p>`).join('')}
+            <p>Total Bunga: ${formatRupiah(totalInterest)}</p>
+            <p>Total Pembayaran: ${formatRupiah(loanAmount + totalInterest)}</p>
+            <div class="toggle-table" onclick="document.getElementById('fixedTable').classList.toggle('hidden')">Lihat Tabel Amortization</div>
+            <div id="fixedTable" class="hidden">${table}</div>
+        `;
+    } else if (rateType === 'floating') {
+        const floatingRate = parseFloat(document.getElementById('floatingRate').value);
+        const monthlyPayment = calculateMonthlyPayment(loanAmount, floatingRate, totalMonths);
+        const { table, totalPaid } = generateAmortizationTable(loanAmount, monthlyPayment, floatingRate, totalMonths, partialPayments);
+        totalInterest = totalPaid - loanAmount;
+        result = `
+            <h3>Hasil Simulasi KPR Floating Rate</h3>
+            <p>Jumlah Pinjaman: ${formatRupiah(loanAmount)}</p>
+            <p>Tenor Awal: ${tenor} tahun (${totalMonths} bulan)</p>
+            <p>Suku Bunga: ${floatingRate}% per tahun</p>
+            <p>Angsuran Bulanan Awal: ${formatRupiah(monthlyPayment)}</p>
+            ${partialPayments.map(p => `<p>Pelunasan Sebagian (Bulan ${p.month}): ${formatRupiah(p.amount)} - ${p.option === 'sameTenor' ? 'Tetap Tenor' : 'Kurangi Tenor'}</p>`).join('')}
+            <p>Total Bunga: ${formatRupiah(totalInterest)}</p>
+            <p>Total Pembayaran: ${formatRupiah(loanAmount + totalInterest)}</p>
+            <div class="toggle-table" onclick="document.getElementById('floatingTable').classList.toggle('hidden')">Lihat Tabel Amortization</div>
+            <div id="floatingTable" class="hidden">${table}</div>
+        `;
+    }
+    else if (rateType === 'tiered') {
+        const tier1Years = parseInt(document.getElementById('tier1Years').value);
+        const tier1Rate = parseFloat(document.getElementById('tier1Rate').value);
+        const tier2Years = parseInt(document.getElementById('tier2Years').value);
+        const tier2Rate = parseFloat(document.getElementById('tier2Rate').value);
+        const tier1Months = tier1Years * 12;
+        const tier2Months = tier2Years * 12;
+
+        let table = '<table><tr><th>Bulan</th><th>Sisa Pokok</th><th>Angsuran Pokok</th><th>Angsuran Bunga</th><th>Total Angsuran</th></tr>';
+        let remainingPrincipal = loanAmount;
+        let newMonthlyPayment;
+        let totalPaid = 0;
+
+        const tier1Payment = calculateMonthlyPayment(loanAmount, tier1Rate, totalMonths);
+        const tier1MonthlyRate = tier1Rate / 12 / 100;
+        for (let i = 1; i <= tier1Months && remainingPrincipal > 0; i++) {
+            let interestPayment = remainingPrincipal * tier1MonthlyRate;
+            let principalPayment = tier1Payment - interestPayment;
+
+            const partial = partialPayments.find(p => p.month === i);
+            if (partial) {
+                remainingPrincipal -= partial.amount;
+                if (partial.option === 'reduceTenor') {
+                    const remainingTotalMonths = Math.ceil(Math.log(1 + (remainingPrincipal * tier1MonthlyRate) / tier1Payment) / Math.log(1 + tier1MonthlyRate));
+                    newMonthlyPayment = calculateMonthlyPayment(remainingPrincipal, tier1Rate, remainingTotalMonths);
+                } else {
+                    newMonthlyPayment = calculateMonthlyPayment(remainingPrincipal, tier1Rate, totalMonths - i);
+                }
+                table += `
+                    <tr>
+                        <td>${i} (Pelunasan Sebagian)</td>
+                        <td>${formatRupiah(remainingPrincipal)}</td>
+                        <td>${formatRupiah(principalPayment + partial.amount)}</td>
+                        <td>${formatRupiah(interestPayment)}</td>
+                        <td>${formatRupiah(tier1Payment + partial.amount)}</td>
+                    </tr>
+                `;
+                totalPaid += tier1Payment + partial.amount;
+                continue;
+            }
+
+            remainingPrincipal -= principalPayment;
+            table += `
+                <tr>
+                    <td>${i}</td>
+                    <td>${formatRupiah(remainingPrincipal)}</td>
+                    <td>${formatRupiah(principalPayment)}</td>
+                    <td>${formatRupiah(interestPayment)}</td>
+                    <td>${formatRupiah(tier1Payment)}</td>
+                </tr>
+            `;
+            totalPaid += tier1Payment;
+        }
+
+        const tier2Payment = newMonthlyPayment || calculateMonthlyPayment(remainingPrincipal, tier2Rate, totalMonths - tier1Months);
+        const tier2MonthlyRate = tier2Rate / 12 / 100;
+        for (let i = tier1Months + 1; i <= tier1Months + tier2Months && remainingPrincipal > 0; i++) {
+            let interestPayment = remainingPrincipal * tier2MonthlyRate;
+            let principalPayment = tier2Payment - interestPayment;
+
+            const partial = partialPayments.find(p => p.month === i);
+            if (partial) {
+                remainingPrincipal -= partial.amount;
+                if (partial.option === 'reduceTenor') {
+                    const remainingTotalMonths = Math.ceil(Math.log(1 + (remainingPrincipal * tier2MonthlyRate) / tier2Payment) / Math.log(1 + tier2MonthlyRate));
+                    newMonthlyPayment = calculateMonthlyPayment(remainingPrincipal, tier2Rate, remainingTotalMonths);
+                } else {
+                    newMonthlyPayment = calculateMonthlyPayment(remainingPrincipal, tier2Rate, totalMonths - i);
+                }
+                table += `
+                    <tr>
+                        <td>${i} (Pelunasan Sebagian)</td>
+                        <td>${formatRupiah(remainingPrincipal)}</td>
+                        <td>${formatRupiah(principalPayment + partial.amount)}</td>
+                        <td>${formatRupiah(interestPayment)}</td>
+                        <td>${formatRupiah(tier2Payment + partial.amount)}</td>
+                    </tr>
+                `;
+                totalPaid += tier2Payment + partial.amount;
+                continue;
+            }
+
+            remainingPrincipal -= principalPayment;
+            if (remainingPrincipal < 0) remainingPrincipal = 0;
+            table += `
+                <tr>
+                    <td>${i}</td>
+                    <td>${formatRupiah(remainingPrincipal)}</td>
+                    <td>${formatRupiah(principalPayment)}</td>
+                    <td>${formatRupiah(interestPayment)}</td>
+                    <td>${formatRupiah(tier2Payment)}</td>
+                </tr>
+            `;
+            totalPaid += tier2Payment;
+        }
+        table += '</table>';
+
+        totalInterest = totalPaid - loanAmount;
+
+        result = `
+            <h3>Hasil Simulasi KPR Fixed Berjenjang</h3>
+            <p>Jumlah Pinjaman: ${formatRupiah(loanAmount)}</p>
+            <p>Tenor Awal: ${tenor} tahun (${totalMonths} bulan)</p>
+            <p>Periode 1 (${tier1Years} tahun): ${tier1Rate}% - ${formatRupiah(tier1Payment)}/bulan</p>
+            <p>Periode 2 (${tier2Years} tahun): ${tier2Rate}% - ${formatRupiah(tier2Payment)}/bulan</p>
+            ${partialPayments.map(p => `<p>Pelunasan Sebagian (Bulan ${p.month}): ${formatRupiah(p.amount)} - ${p.option === 'sameTenor' ? 'Tetap Tenor' : 'Kurangi Tenor'}</p>`).join('')}
+            <p>Total Bunga: ${formatRupiah(totalInterest)}</p>
+            <p>Total Pembayaran: ${formatRupiah(loanAmount + totalInterest)}</p>
+            <div class="toggle-table" onclick="document.getElementById('tieredTable').classList.toggle('hidden')">Lihat Tabel Amortization</div>
+            <div id="tieredTable" class="hidden">${table}</div>
+        `;
+    }
+    
     // ... (kode untuk fixed, floating, dan tiered tetap sama)
 
     document.getElementById('result').innerHTML = result;
