@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech dengan Download</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        select {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Text to Speech</h2>
+    
+    <div class="control-group">
+        <textarea id="textInput" placeholder="Masukkan teks yang ingin dibaca...">
+Halo bro, apa kabar? Gua yakin lo semua setuju, hidup di Jakarta tuh kayak main game level expert, tapi kontrolernya rusak!
+        </textarea>
+    </div>
+
+    <div class="control-group">
+        <label for="voiceSelect">Pilih Suara:</label>
+        <select id="voiceSelect"></select>
+    </div>
+
+    <div class="control-group">
+        <label for="volume">Volume (0-1):</label>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+        <span id="volumeValue">1</span>
+    </div>
+
+    <div class="control-group">
+        <label for="rate">Kecepatan (0.1-2):</label>
+        <input type="range" id="rate" min="0.1" max="2" step="0.1" value="1">
+        <span id="rateValue">1</span>
+    </div>
+
+    <div class="control-group">
+        <label for="pitch">Nada (0-2):</label>
+        <input type="range" id="pitch" min="0" max="2" step="0.1" value="1">
+        <span id="pitchValue">1</span>
+    </div>
+
+    <div class="control-group">
+        <button onclick="speakText()">Putar Suara</button>
+        <button onclick="stopSpeech()">Berhenti</button>
+        <button onclick="downloadAudio()">Download Audio</button>
+    </div>
+
+    <script>
+        let audioContext;
+        let mediaRecorder;
+        let audioChunks = [];
+        let voices = []; // Simpan daftar suara secara global
+        let selectedVoiceIndex = 0; // Simpan indeks suara yang dipilih
+
+        // Fungsi utama untuk text-to-speech
+        function speakText() {
+            if (!('speechSynthesis' in window)) {
+                alert('Maaf, browser Anda tidak mendukung text-to-speech');
+                return;
+            }
+
+            const text = document.getElementById('textInput').value;
+            if (!text) {
+                alert('Masukkan teks terlebih dahulu!');
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Ambil pengaturan
+            const voiceSelect = document.getElementById('voiceSelect');
+            const volume = parseFloat(document.getElementById('volume').value);
+            const rate = parseFloat(document.getElementById('rate').value);
+            const pitch = parseFloat(document.getElementById('pitch').value);
+            
+            // Gunakan suara yang dipilih
+            utterance.voice = voices[voiceSelect.value];
+            utterance.volume = volume;
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.lang = 'id-ID';
+
+            // Event handlers
+            utterance.onstart = () => console.log('Memulai pembacaan');
+            utterance.onend = () => console.log('Selesai pembacaan');
+            utterance.onerror = (e) => {
+                console.error('Error:', e);
+                alert('Terjadi kesalahan: ' + e.error);
+            };
+
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Fungsi untuk menghentikan suara
+        function stopSpeech() {
+            window.speechSynthesis.cancel();
+        }
+
+        // Mengisi daftar suara yang tersedia
+        function populateVoices() {
+            const voiceSelect = document.getElementById('voiceSelect');
+            voices = window.speechSynthesis.getVoices();
+            
+            voiceSelect.innerHTML = '';
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.text = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+
+            // Kembalikan ke suara yang sebelumnya dipilih
+            voiceSelect.value = selectedVoiceIndex;
+        }
+
+        // Simpan pilihan suara saat diubah
+        function saveSelectedVoice() {
+            const voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.addEventListener('change', () => {
+                selectedVoiceIndex = voiceSelect.value;
+            });
+        }
+
+        // Update nilai slider secara real-time
+        function updateSliderValues() {
+            const sliders = ['volume', 'rate', 'pitch'];
+            sliders.forEach(slider => {
+                const input = document.getElementById(slider);
+                const valueSpan = document.getElementById(slider + 'Value');
+                input.addEventListener('input', () => {
+                    valueSpan.textContent = input.value;
+                });
+            });
+        }
+
+        // Fungsi untuk download audio
+        async function downloadAudio() {
+            if (!('speechSynthesis' in window) || !window.AudioContext) {
+                alert('Browser Anda tidak mendukung fitur ini');
+                return;
+            }
+
+            const text = document.getElementById('textInput').value;
+            if (!text) {
+                alert('Masukkan teks terlebih dahulu!');
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voiceSelect = document.getElementById('voiceSelect');
+            const volume = parseFloat(document.getElementById('volume').value);
+            const rate = parseFloat(document.getElementById('rate').value);
+            const pitch = parseFloat(document.getElementById('pitch').value);
+            
+            utterance.voice = voices[voiceSelect.value];
+            utterance.volume = volume;
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.lang = 'id-ID';
+
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaStreamSource(await navigator.mediaDevices.getUserMedia({ audio: true }));
+            mediaRecorder = new MediaRecorder(source.stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const link = document.createElement('a');
+                link.href = audioUrl;
+                link.download = 'standup_comedy.wav';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                audioContext.close();
+            };
+
+            mediaRecorder.start();
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+
+            utterance.onend = () => {
+                mediaRecorder.stop();
+                source.disconnect();
+            };
+        }
+
+        // Inisialisasi saat halaman dimuat
+        window.addEventListener('load', () => {
+            populateVoices();
+            window.speechSynthesis.onvoiceschanged = populateVoices;
+            updateSliderValues();
+            saveSelectedVoice(); // Panggil fungsi untuk menyimpan pilihan suara
+        });
+    </script>
+</body>
+</html>
