@@ -1,0 +1,131 @@
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 2rem;
+    color: #333;
+  }
+  
+  h1, h2, h3 {
+    color: #0a3d62;
+  }
+  
+  form {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    /*max-width: 800px;*/
+    /*margin-bottom: 2rem;*/
+  }
+  
+  label {
+    display: block;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem;
+    color: #1e272e;
+  }
+  
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #dcdde1;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fefefe;
+    font-size: 1rem;
+  }
+  
+  input[type="number"]:focus,
+  select:focus {
+    outline: none;
+    border-color: #0a3d62;
+    box-shadow: 0 0 0 1px #0a3d62;
+  }
+  
+  button {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-right: 0.5rem;
+  }
+  
+  button[type="button"] {
+    background-color: #0a3d62;
+    color: white;
+  }
+  
+  button[type="reset"] {
+    background-color: #dcdde1;
+    color: #333;
+  }
+  
+  hr {
+    margin: 2rem 0;
+    border: 1px solid #dcdde1;
+  }
+  
+  .repayment-block {
+    background-color: #f1f2f6;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid #0a3d62;
+  }
+  
+  /* Table Styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background-color: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  th {
+    background-color: #dff1ff;
+    color: #0a3d62;
+    font-weight: 600;
+  }
+  
+  td {
+    color: #333;
+  }
+  .layout-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-top: 1rem;
+  }
+  
+  #kprForm {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+  }
+  
+  .result-box {
+    flex: 1;
+    padding: 1rem;
+    background-color: #f4f4f4;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .result-box h2 {
+    margin-top: 0;
+  }
+  

@@ -1,89 +1,59 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator KPR Indonesia</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simulasi KPR</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <h2>Kalkulator KPR Indonesia</h2>
-        <div class="form-group">
-            <label>Jumlah Pinjaman (Rp)</label>
-            <input type="number" id="loanAmount" required>
-        </div>
-        <div class="form-group">
-            <label>Tenor (tahun)</label>
-            <input type="number" id="tenor" required>
-        </div>
-        <div class="form-group">
-            <label>Tipe Suku Bunga</label>
-            <select id="rateType" onchange="toggleRateOptions()">
-                <option value="fixed">Fixed Rate</option>
-                <!-- <option value="floating">Floating Rate</option> -->
-                <option value="combined">Combined (Fixed + Floating)</option>
-                <option value="tiered">Fixed Berjenjang (on development)</option>
-            </select>
-        </div>
+  <h1>Simulasi KPR</h1>
+  <div class="layout-container">
+    <form id="kprForm">
+        <label>Jumlah Pinjaman (Rp)
+          <input type="number" id="loanAmount" required />
+        </label>
+    
+        <label>Tenor (tahun)
+          <input type="number" id="loanTenor" required />
+        </label>
+    
+        <label>Tipe Suku Bunga
+          <select id="interestType">
+            <option value="fixed">Fixed Rate</option>
+            <option value="combine">Combine (Fixed + Floating)</option>
+          </select>
+        </label>
+    
+        <label>Tahun Fixed Rate
+          <input type="number" id="fixedYears" required />
+        </label>
+    
+        <label>Suku Bunga Fixed (% per tahun)
+          <input type="number" step="0.01" id="fixedRate" required />
+        </label>
+    
+        <label id="floatingRateLabel" style="display:none;">
+          Suku Bunga Floating (% per tahun)
+          <input type="number" step="0.01" id="floatingRate" />
+        </label>
+    
+        <hr/>
+        <h3>Pelunasan Sebagian (Opsional)</h3>
+        <div id="partialRepayments"></div>
+        <button type="button" onclick="addPartialRepayment()">Tambah Pelunasan Sebagian</button>
+    
+        <hr/>
+        <button type="button" onclick="calculateKPR()">Hitung</button>
+        <button type="reset" onclick="resetForm()">Reset</button>
+      </form>
+      <!-- Kanan: Hasil Simulasi -->
+    <div id="result" class="result-box"></div>
+  </div>
+  
 
-        <div id="fixedOptions" class="rate-option">
-            <div class="form-group">
-                <label>Suku Bunga Fixed (% per tahun)</label>
-                <input type="number" id="fixedRate" step="0.1">
-            </div>
-        </div>
+  <div id="amortizationTableContainer"></div>
 
-        <div id="floatingOptions" class="rate-option hidden">
-            <div class="form-group">
-                <label>Suku Bunga Floating (% per tahun)</label>
-                <input type="number" id="floatingRate" step="0.1">
-            </div>
-        </div>
-
-        <div id="combinedOptions" class="rate-option hidden">
-            <div class="form-group">
-                <label>Tahun Fixed Rate</label>
-                <input type="number" id="fixedYears" max="10">
-            </div>
-            <div class="form-group">
-                <label>Suku Bunga Fixed (% per tahun)</label>
-                <input type="number" id="combinedFixedRate" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Suku Bunga Floating (% per tahun)</label>
-                <input type="number" id="combinedFloatingRate" step="0.1">
-            </div>
-        </div>
-
-        <div id="tieredOptions" class="rate-option hidden">
-            <div class="form-group">
-                <label>Periode 1 (tahun)</label>
-                <input type="number" id="tier1Years">
-                <label>Suku Bunga Periode 1 (%)</label>
-                <input type="number" id="tier1Rate" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Periode 2 (tahun)</label>
-                <input type="number" id="tier2Years">
-                <label>Suku Bunga Periode 2 (%)</label>
-                <input type="number" id="tier2Rate" step="0.1">
-            </div>
-        </div>
-
-        <!-- Opsi Pelunasan Sebagian (Array) -->
-        <div id="partialPayments">
-            <h3>Pelunasan Sebagian (Opsional)</h3>
-            <div id="partialList"></div>
-            <button onclick="addPartialPayment()">Tambah Pelunasan Sebagian</button>
-            <hr><br>
-        </div>
-
-        <button onclick="calculate()">Hitung</button>
-        <button id="resetBtn" onclick="resetForm()">Reset</button>
-        <div id="result"></div>
-    </div>
-
-    <script src="script.js"></script>
+  <script src="kpr.js"></script>
 </body>
 </html>
